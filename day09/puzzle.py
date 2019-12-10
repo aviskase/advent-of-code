@@ -38,13 +38,23 @@ class IntcodeComputer:
         modes = list(map(int, data[-3::-1]))
         return code, modes
 
-    def get_value(self, cell, mode):
+    def set_value(self, param_num, value, modes):
+        mode = modes[param_num-1]
+        val = self.program[self.index + param_num]
         if mode == 0:
-            return self.program[cell]
+            self.program[val] = value
+        elif mode == 2:
+            self.program[val + self.relative_base] = value
+
+    def get_value(self, param_num, modes):
+        mode = modes[param_num-1]
+        val = self.program[self.index + param_num]
+        if mode == 0:
+            return self.program[val]
         if mode == 1:
-            return cell
+            return val
         if mode == 2:
-            return self.program[self.relative_base + cell]
+            return self.program[val + self.relative_base]
 
     def execute(self, input_data=None, exit_on_output=False):
         outputs = []
@@ -55,51 +65,47 @@ class IntcodeComputer:
         while not ready_to_exit:
             current_code, current_modes = self.unpack_code(self.program[self.index])
             if current_code == 1:
-                value1 = self.get_value(self.program[self.index + 1], current_modes[0])
-                value2 = self.get_value(self.program[self.index + 2], current_modes[1])
-                position = self.program[self.index + 3]
-                self.program[position] = value1 + value2
+                value1 = self.get_value(1, current_modes)
+                value2 = self.get_value(2, current_modes)
+                self.set_value(3, value1 + value2, current_modes)
                 self.index += 4
             elif current_code == 2:
-                value1 = self.get_value(self.program[self.index + 1], current_modes[0])
-                value2 = self.get_value(self.program[self.index + 2], current_modes[1])
-                position = self.program[self.index + 3]
-                self.program[position] = value1 * value2
+                value1 = self.get_value(1, current_modes)
+                value2 = self.get_value(2, current_modes)
+                self.set_value(3, value1 * value2, current_modes)
                 self.index += 4
             elif current_code == 3:
-                position = self.program[self.index + 1]
                 if inputs is None:
                     raise ValueError('Unexpected input optcode with no inputs provided')
-                self.program[position] = next(inputs)
+                self.set_value(1, next(inputs), current_modes)
                 self.index += 2
             elif current_code == 4:
-                cell = self.program[self.index + 1]
-                output_value = self.get_value(cell, current_modes[0])
+                output_value = self.get_value(1, current_modes)
                 self.index += 2
                 outputs.append(output_value)
                 ready_to_exit = exit_on_output
             elif current_code == 5:
-                value = self.get_value(self.program[self.index + 1], current_modes[0])
-                position = self.get_value(self.program[self.index + 2], current_modes[1])
+                value = self.get_value(1, current_modes)
+                position = self.get_value(2, current_modes)
                 self.index = position if value != 0 else self.index + 3
             elif current_code == 6:
-                value = self.get_value(self.program[self.index + 1], current_modes[0])
-                position = self.get_value(self.program[self.index + 2], current_modes[1])
+                value = self.get_value(1, current_modes)
+                position = self.get_value(2, current_modes)
                 self.index = position if value == 0 else self.index + 3
             elif current_code == 7:
-                value1 = self.get_value(self.program[self.index + 1], current_modes[0])
-                value2 = self.get_value(self.program[self.index + 2], current_modes[1])
-                position = self.program[self.index + 3]
-                self.program[position] = 1 if value1 < value2 else 0
+                value1 = self.get_value(1, current_modes)
+                value2 = self.get_value(2, current_modes)
+                result = 1 if value1 < value2 else 0
+                self.set_value(3, result, current_modes)
                 self.index += 4
             elif current_code == 8:
-                value1 = self.get_value(self.program[self.index + 1], current_modes[0])
-                value2 = self.get_value(self.program[self.index + 2], current_modes[1])
-                position = self.program[self.index + 3]
-                self.program[position] = 1 if value1 == value2 else 0
+                value1 = self.get_value(1, current_modes)
+                value2 = self.get_value(2, current_modes)
+                result = 1 if value1 == value2 else 0
+                self.set_value(3, result, current_modes)
                 self.index += 4
             elif current_code == 9:
-                self.relative_base += self.get_value(self.program[self.index + 1], current_modes[0])
+                self.relative_base += self.get_value(1, current_modes)
                 self.index += 2
             elif current_code == 99:
                 ready_to_exit = True
@@ -153,24 +159,8 @@ def run_engines_with_feedback(phases, program):
 
 def solver():
     with open('input.txt', 'r') as f:
-        program = [int(intcode) for intcode in f.readline().split(',')]
-        max_result = -1
-        phase_result = []
-        for phases in permutations(range(5)):
-            result = run_engines(phases, program)
-            if result > max_result:
-                max_result = result
-                phase_result = list(phases)
-        print('Base engine: ', max_result, ' - ', phase_result)
-
-        max_result = -1
-        phase_result = []
-        for phases in permutations(range(5, 10)):
-            result = run_engines_with_feedback(phases, program)
-            if result > max_result:
-                max_result = result
-                phase_result = list(phases)
-        print('Feedback engine: ', max_result, ' - ', phase_result)
+        computer = IntcodeComputer.from_string(f.readline())
+        print(computer.execute(1))
 
 
 if __name__ == '__main__':

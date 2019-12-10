@@ -94,3 +94,17 @@ def test_big_numbers(program, output):
 def test_memory():
     program = [109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99]
     assert IntcodeComputer(program).execute() == program
+
+
+@pytest.mark.parametrize('program,output', [
+    ([109, -1, 4, 1, 99], -1),
+    ([109, -1, 104, 1, 99], 1),
+    ([109, -1, 204, 1, 99], 109),
+    ([109, 1, 9, 2, 204, -6, 99], 204),
+    ([109, 1, 109, 9, 204, -6, 99], 204),
+    ([109, 1, 209, -1, 204, -106, 99], 204),
+    ([109, 1, 3, 3, 204, 2, 99], 678),
+    ([109, 1, 203, 2, 204, 2, 99], 678),
+])
+def test_from_reddit(program, output):
+    assert IntcodeComputer(program).execute(678)[0] == output
