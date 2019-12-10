@@ -159,8 +159,11 @@ def run_engines_with_feedback(phases, program):
 
 def solver():
     with open('input.txt', 'r') as f:
-        computer = IntcodeComputer.from_string(f.readline())
-        print(computer.execute(1))
+        line = f.readline()
+        part_1 = IntcodeComputer.from_string(line)
+        print('Part 1:', part_1.execute(1))
+        part_2 = IntcodeComputer.from_string(line)
+        print('Part 2:', part_2.execute(2))
 
 
 if __name__ == '__main__':
