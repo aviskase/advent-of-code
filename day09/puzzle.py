@@ -2,12 +2,33 @@ from typing import List
 from itertools import permutations, repeat
 
 
+class SparseList(list):
+    filler = 0
+
+    def __setitem__(self, index, value):
+        missing = index - len(self) + 1
+        if missing > 0:
+            self.extend([self.filler] * missing)
+        list.__setitem__(self, index, value)
+
+    def __getitem__(self, index):
+        try:
+            return list.__getitem__(self, index)
+        except IndexError:
+            self[index] = self.filler
+            return self.filler
+
+
 class IntcodeComputer:
     relative_base = 0
     index = 0
 
+    @classmethod
+    def from_string(cls, program):
+        return cls([int(intcode) for intcode in program.split(',')])
+
     def __init__(self, program: List[int]):
-        self.program = program.copy()
+        self.program = SparseList(program.copy())
         self.finished = False
 
     @staticmethod
@@ -25,9 +46,11 @@ class IntcodeComputer:
         if mode == 2:
             return self.program[self.relative_base + cell]
 
-    def execute(self, input_data, exit_on_output=False):
+    def execute(self, input_data=None, exit_on_output=False):
         outputs = []
-        inputs = self.inputs_generator(input_data)
+        inputs = None
+        if input_data is not None:
+            inputs = self.inputs_generator(input_data)
         ready_to_exit = False
         while not ready_to_exit:
             current_code, current_modes = self.unpack_code(self.program[self.index])
@@ -45,6 +68,8 @@ class IntcodeComputer:
                 self.index += 4
             elif current_code == 3:
                 position = self.program[self.index + 1]
+                if inputs is None:
+                    raise ValueError('Unexpected input optcode with no inputs provided')
                 self.program[position] = next(inputs)
                 self.index += 2
             elif current_code == 4:
@@ -74,7 +99,7 @@ class IntcodeComputer:
                 self.program[position] = 1 if value1 == value2 else 0
                 self.index += 4
             elif current_code == 9:
-                self.relative_base = self.get_value(self.program[self.index + 1], current_modes[0])
+                self.relative_base += self.get_value(self.program[self.index + 1], current_modes[0])
                 self.index += 2
             elif current_code == 99:
                 ready_to_exit = True
