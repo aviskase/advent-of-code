@@ -1,5 +1,5 @@
 import pytest
-from day10.puzzle import extract_coordinates, in_direct_sight, find_center, convert_to_relative_map
+from day10.puzzle import extract_coordinates, in_direct_sight, find_center, convert_to_relative_map, calculate_angles, sort_left_quadrant, sort_right_quadrant
 
 BASE_MAP = [
     '.#..#',
@@ -26,3 +26,11 @@ def test_in_direct_sight(point, num):
 
 def test_find_center():
     assert find_center(BASE_COORDINATES) == (3, 4)
+
+
+def test_maps():
+    angles = calculate_angles(convert_to_relative_map((2, 2), BASE_COORDINATES))
+    from pprint import pprint
+    pprint(angles)
+    pprint(sort_right_quadrant(angles))
+    pprint(sort_left_quadrant(angles))

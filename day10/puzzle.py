@@ -1,4 +1,4 @@
-from math import atan2, isclose, dist
+from math import atan2, isclose, dist, degrees
 
 
 def is_blocking(suspect, a, b):
@@ -39,14 +39,38 @@ def convert_to_relative_map(center, coordinates):
     return [
         (point[0]-center[0], point[1]-center[1])
         for point in coordinates
+        if point != center
     ]
+
+
+
+
+def calculate_angles(points):
+    return [(degrees(atan2(*point)), point) for point in points]
+
+
+def sort_right_quadrant(points):
+    return sorted([p for p in points if p[0] >= 0], key=lambda p: p[0], reverse=True)
+
+
+def sort_left_quadrant(points):
+    return sorted([p for p in points if p[0] < 0], key=lambda p: p[0], reverse=True)
 
 
 def solver():
     with open('input.txt', 'r') as f:
         coordinates = extract_coordinates(f.readlines())
         center = find_center(coordinates)
-        print(len(in_direct_sight(center, coordinates)))
+        coordinates = convert_to_relative_map(center, coordinates)
+        first_sight = in_direct_sight((0, 0), coordinates)
+        print('Part 1:', len(first_sight))
+        angles = calculate_angles(first_sight)
+        right = sort_right_quadrant(angles)
+        left_to_find = 200 - len(right)
+        left = sort_left_quadrant(angles)
+        found = left[left_to_find-1][1]
+        result = (found[0] + center[0])*100 + (center[1] + found[1])
+        print('Part 2:', result)
 
 
 if __name__ == '__main__':
