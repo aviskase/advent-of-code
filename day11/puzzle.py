@@ -169,27 +169,31 @@ def turn(current, direction):
 
 
 def move(origin, pointed):
+    # X goes left(-inf) to right(+inf)
+    # Y goes up(-inf) to down(+inf) --- otherwise the image is reversed
     if pointed == 'up':
-        return origin[0], origin[1] + 1
-    if pointed == 'down':
         return origin[0], origin[1] - 1
+    if pointed == 'down':
+        return origin[0], origin[1] + 1
     if pointed == 'right':
         return origin[0] + 1, origin[1]
     if pointed == 'left':
         return origin[0] - 1, origin[1]
 
 
-def paint(program):
+def paint(program, start_color=0):
     painted = set()
     whites = set()
     computer = IntcodeComputer.from_string(program)
     current_point = (0, 0)
+    if start_color:
+        whites.add(current_point)
     pointed = 'up'
     while True:
         color = 1 if current_point in whites else 0
         output = computer.execute(color, True, exit_after=2)
         if computer.finished:
-            return painted
+            return painted, whites
         new_color, direction = output
         if new_color == 1:
             whites.add(current_point)
@@ -200,10 +204,26 @@ def paint(program):
         current_point = move(current_point, pointed)
 
 
+def to_image(coordinates):
+    min_x = min(coordinates, key=lambda point: point[0])[0]
+    max_x = max(coordinates, key=lambda point: point[0])[0] - min_x
+    min_y = min(coordinates, key=lambda point: point[1])[1]
+    max_y = max(coordinates, key=lambda point: point[1])[1] - min_y
+    print(max_x, max_y, min_y, max_x)
+    template = [[' ']*(max_x+1) for y in range(max_y+1)]
+    for point in coordinates:
+        x = point[0] - min_x
+        y = point[1] - min_y
+        template[y][x] = '█'
+    return '\n'.join(''.join(t) for t in template)
+
+
 def solver():
     with open('input.txt', 'r') as f:
         line = f.readline()
-        print('Part 1', len(paint(line)))
+        print('Part 1', len(paint(line)[0]))
+        _, part_2 = paint(line, 1)
+        print(to_image(part_2))
 
 
 if __name__ == '__main__':
