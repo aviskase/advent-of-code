@@ -1,5 +1,5 @@
 import pytest
-from day12.puzzle import Moon, simulator
+from day12.puzzle import Moon, simulator, find_old_new_state
 
 
 @pytest.mark.parametrize('data, result', [
@@ -20,9 +20,21 @@ def test_gravitation():
     assert m2.velocity_x == -1
 
 
+MOONS_1 = [Moon(-1, 0, 2), Moon(2, -10, -7), Moon(4, -8, 8), Moon(3, 5, -1)]
+MOONS_2 = [Moon(-8, -10, 0), Moon(5, 5, 10), Moon(2, -7, 3), Moon(9, -8, -3)]
+
+
 @pytest.mark.parametrize('moons, iters, energy', [
-    ([Moon(-1, 0, 2), Moon(2, -10, -7), Moon(4, -8, 8), Moon(3, 5, -1)], 10, 179),
-    ([Moon(-8, -10, 0), Moon(5, 5, 10), Moon(2, -7, 3), Moon(9, -8, -3)], 100, 1940),
+    (MOONS_1, 10, 179),
+    (MOONS_2, 100, 1940),
 ])
 def test_simulation(moons, iters, energy):
     assert simulator(moons, iters) == energy
+
+
+@pytest.mark.parametrize('moons, iters', [
+    (MOONS_1, 2772),
+    (MOONS_2, 4686774924),
+])
+def test_find_old_new_state(moons, iters):
+    assert find_old_new_state(moons) == iters

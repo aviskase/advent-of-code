@@ -11,9 +11,13 @@ class Moon:
         self.velocity_x = vx
         self.velocity_y = vy
         self.velocity_z = vz
+        self.init_state = (x, y, z, vx, vy, vz)
+
+    def is_in_init_state(self):
+        return self.init_state == (self.x, self.y, self.z, self.velocity_x, self.velocity_y, self.velocity_z)
 
     def __repr__(self):
-        return f'{self.x} {self.y} {self.z} | {self.velocity_x} {self.velocity_z} {self.velocity_y}'
+        return f'{self.x:4} {self.y:4} {self.z:4} | {self.velocity_x:4} {self.velocity_z:4} {self.velocity_y:4}'
 
     @property
     def potential_energy(self):
@@ -54,23 +58,37 @@ class Moon:
             moon_two.velocity_z -= 1
 
 
+def time_step(moons):
+    for m1, m2 in itertools.combinations(moons, 2):
+        Moon.gravitate(m1, m2)
+    for moon in moons:
+        moon.move()
+
+
 def simulator(moons, iterations):
     for i in range(iterations):
-        for m1, m2 in itertools.combinations(moons, 2):
-            Moon.gravitate(m1, m2)
-        for moon in moons:
-            moon.move()
+        time_step(moons)
     return sum(moon.total_energy for moon in moons)
+
+
+def find_old_new_state(moons):
+    step = 1
+    while True:
+        time_step(moons)
+        if all(moon.is_in_init_state() for moon in moons):
+            return step
+        step += 1
 
 
 def solver():
     moons = [
-        Moon(-7, 17, -11),
-        Moon(9, 12, 5),
-        Moon(-9, 0, -4),
-        Moon(4, 6, 0)
+        (-7, 17, -11),
+        (9, 12, 5),
+        (-9, 0, -4),
+        (4, 6, 0)
     ]
-    print('Part 1:', simulator(moons, 1000))
+    print('Part 1:', simulator([Moon(*m) for m in moons], 1000))
+    print('Part 2:', find_old_new_state([Moon(*m) for m in moons]))
 
 
 if __name__ == '__main__':
