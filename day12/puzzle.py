@@ -1,6 +1,16 @@
 from __future__ import annotations
 
 import itertools
+from functools import reduce
+from math import gcd
+
+
+def lcm(a, b):
+    return int(a * b / gcd(a, b))
+
+
+def lcms(*numbers):
+    return reduce(lcm, numbers)
 
 
 class Moon:
@@ -11,10 +21,6 @@ class Moon:
         self.velocity_x = vx
         self.velocity_y = vy
         self.velocity_z = vz
-        self.init_state = (x, y, z, vx, vy, vz)
-
-    def is_in_init_state(self):
-        return self.init_state == (self.x, self.y, self.z, self.velocity_x, self.velocity_y, self.velocity_z)
 
     def __repr__(self):
         return f'{self.x:4} {self.y:4} {self.z:4} | {self.velocity_x:4} {self.velocity_z:4} {self.velocity_y:4}'
@@ -71,13 +77,55 @@ def simulator(moons, iterations):
     return sum(moon.total_energy for moon in moons)
 
 
+def perioder(index, coordinate, patterns, moon_coordinate):
+    patterns[index][coordinate]['path'].append(moon_coordinate)
+    s = patterns[index][coordinate]['start']
+    if s != -1:
+        n = patterns[index][coordinate]['next']
+        if moon_coordinate == patterns[index][coordinate]['path'][n]:
+            patterns[index][coordinate]['next'] += 1
+            if patterns[index][coordinate]['next'] == patterns[index][coordinate]['start']:
+                patterns[index][coordinate]['period'] = patterns[index][coordinate]['start']
+            return
+        else:
+            patterns[index][coordinate]['start'] = -1
+            patterns[index][coordinate]['next'] = -1
+    if moon_coordinate == patterns[index][coordinate]['path'][0]:
+        patterns[index][coordinate]['start'] = len(patterns[index][coordinate]['path']) - 1
+        patterns[index][coordinate]['next'] = 1
+
+
+def all_periods(patterns):
+    periods = set()
+    for moon in patterns:
+        periods.add(moon['x']['period'])
+        periods.add(moon['y']['period'])
+        periods.add(moon['z']['period'])
+    return periods
+
+
 def find_old_new_state(moons):
     step = 1
+    patterns = [
+        {
+            'x': {'start': -1, 'path': [moon.x], 'next': -1, 'period': None},
+            'y': {'start': -1, 'path': [moon.y], 'next': -1, 'period': None},
+            'z': {'start': -1, 'path': [moon.z], 'next': -1, 'period': None},
+        }
+        for moon in moons
+    ]
     while True:
         time_step(moons)
-        if all(moon.is_in_init_state() for moon in moons):
-            return step
-        step += 1
+        for i, moon in enumerate(moons):
+            if patterns[i]['x']['period'] is None:
+                perioder(i, 'x', patterns, moon.x)
+            if patterns[i]['y']['period'] is None:
+                perioder(i, 'y', patterns, moon.y)
+            if patterns[i]['z']['period'] is None:
+                perioder(i, 'z', patterns, moon.z)
+            periods = all_periods(patterns)
+            if None not in periods:
+                return lcms(*periods)
 
 
 def solver():
