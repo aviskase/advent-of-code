@@ -53,11 +53,28 @@ def calculate_fuel(formulas):
     return calculate('FUEL', 1, formulas)
 
 
+def calculate_fuel_by_ore(data, total_ore):
+    amount = 1
+    step = total_ore - amount
+    while True:
+        formulas = parse_data(data)
+        ore = calculate('FUEL', amount, formulas)
+        step = round(step / 2)
+        if step < 1:
+            break
+        if ore > total_ore:
+            amount -= step
+        else:
+            amount += step
+    return amount
+
+
 def solver():
     with open('input.txt', 'r') as f:
         data = f.readlines()
     formulas = parse_data(data)
     print('Part 1:', calculate_fuel(formulas))
+    print('Part 2:', calculate_fuel_by_ore(data, 1000000000000))
 
 
 if __name__ == '__main__':
