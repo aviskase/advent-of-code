@@ -1,7 +1,7 @@
 from collections import deque
 from dataclasses import dataclass
 from typing import List, Deque
-from itertools import repeat, zip_longest
+from itertools import repeat
 from copy import deepcopy
 
 
@@ -20,25 +20,6 @@ class SparseList(list):
         except IndexError:
             self[index] = self.filler
             return self.filler
-
-
-class SparseStrList(SparseList):
-    filler = '█'
-
-
-class SparseList2D(list):
-    def __setitem__(self, index, value):
-        missing = index - len(self) + 1
-        if missing > 0:
-            self.extend(SparseStrList() for _ in range(missing))
-        list.__setitem__(self, index, value)
-
-    def __getitem__(self, index):
-        try:
-            return list.__getitem__(self, index)
-        except IndexError:
-            self[index] = SparseStrList()
-            return self[index]
 
 
 class IntcodeComputer:
@@ -149,74 +130,6 @@ class IntcodeComputer:
         yield from repeat(inputs[-1])
 
 
-def grouper(iterable, n, fillvalue=None):
-    """Collect data into fixed-length chunks or blocks"""
-    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
-    args = [iter(iterable)] * n
-    return zip_longest(*args, fillvalue=fillvalue)
-
-
-class Board:
-    def __init__(self, data):
-        self.oxygen = None
-        self.droid = None
-        self.board = dict()
-        self.screen = SparseList2D()
-        for x, y, value in grouper(data, 3):
-            self.update(x, y, value)
-
-    def update(self, x, y, value):
-        if value == 'block':
-            self.screen[y][x] = '#'
-        if value == 'visited':
-            self.screen[y][x] = '.'
-        if value == 'oxygen':
-            self.oxygen = (x, y)
-            self.screen[y][x] = 'W' if self.oxygen == self.droid else 'x'
-        if value == 'droid':
-            self.droid = (x, y)
-            self.screen[y][x] = 'W' if self.oxygen == self.droid else 'D'
-
-    def display(self):
-        print('\n'.join(''.join(row) for row in self.screen))
-        if self.oxygen is not None:
-            print(f'Oxygen found! {self.oxygen}')
-
-
-def new_coordinate(origin, direction):
-    if direction == 1:
-        return origin[0], origin[1] - 1
-    if direction == 2:
-        return origin[0], origin[1] + 1
-    if direction == 3:
-        return origin[0] - 1, origin[1]
-    if direction == 4:
-        return origin[0] + 1, origin[1]
-
-
-def control_droid(computer: IntcodeComputer):
-    current_position = (25, 25)
-    board = Board([*current_position, 'droid'])
-    while not computer.finished:
-        computer.execute(exit_on_input=True)
-        move = int(input('1n, 2s, 3w, 4e, 0exit: '))
-        if move == 0:
-            break
-        output = computer.execute(input_data=move, exit_on_output=True)[0]
-        if output == 0:
-            board.update(*new_coordinate(current_position, move), 'block')
-        if output == 1:
-            board.update(*current_position, 'visited')
-            current_position = new_coordinate(current_position, move)
-            board.update(*current_position, 'droid')
-        if output == 2:
-            board.update(*current_position, 'visited')
-            current_position = new_coordinate(current_position, move)
-            board.update(*current_position, 'oxygen')
-            board.update(*current_position, 'droid')
-        board.display()
-
-
 @dataclass
 class Point:
     x: int
@@ -230,41 +143,40 @@ class QueueNode:
     computer: IntcodeComputer
 
 
-def bfs(computer):
-    source = Point(25, 25)
+def bfs(computer, fill_all=False):
+    source = Point(0, 0)
     directions_x = [0, 0, -1, 1]
     directions_y = [-1, 1, 0, 0]
     visited = [source]
     queue: Deque[QueueNode] = deque()
     queue.append(QueueNode(source, 0, deepcopy(computer)))
+    distances = set()
     while queue:
-        current_node = queue[0]
-        current_point = current_node.point
+        node = queue[0]
         queue.popleft()
         for i in range(4):
             direction = i + 1
-            x = current_point.x + directions_x[i]
-            y = current_point.y + directions_y[i]
+            x = node.point.x + directions_x[i]
+            y = node.point.y + directions_y[i]
             new_point = Point(x, y)
-            current_computer = deepcopy(current_node.computer)
+            current_computer = deepcopy(node.computer)
             output = current_computer.execute(input_data=direction, exit_on_output=True)[0]
-            if output == 2:
-                return current_node.distance + 1
+            if output == 2 and not fill_all:
+                return node.distance + 1, current_computer
             if new_point not in visited and output == 1:
                 visited.append(new_point)
-                queue.append(QueueNode(
-                    new_point,
-                    current_node.distance + 1,
-                    current_computer
-                ))
-    return -1
+                queue.append(QueueNode(new_point, node.distance + 1, current_computer))
+                distances.add(node.distance + 1)
+    return max(distances)
 
 
 def solver():
     with open('input.txt', 'r') as f:
         line = f.readline()
         computer = IntcodeComputer.from_string(line)
-        print('Part 1:', bfs(computer))
+        distance, init_computer = bfs(computer)
+        print('Part 1:', distance)
+        print('Part 2:', bfs(init_computer, fill_all=True))
 
 
 if __name__ == '__main__':
