@@ -1,6 +1,6 @@
 import pytest
 from itertools import islice
-from day16.puzzle import to_signal, get_pattern, phase, cycle_phases
+from day16.puzzle import to_signal, get_pattern, phase, cycle_phases, get_message
 
 
 def test_to_signal():
@@ -33,3 +33,13 @@ def test_phase():
 ])
 def test_phases(signal, p, output):
     assert cycle_phases(to_signal(signal), p)[:8] == to_signal(output)
+
+
+@pytest.mark.parametrize('signal, message', [
+    ('03036732577212944063491565474664', '84462026'),
+    ('02935109699940807407585447034323', '78725270'),
+    ('03081770884921959731165446850517', '53553731'),
+])
+def test_get_message(signal, message):
+    signal = to_signal(signal * 10000)
+    assert get_message(signal, 100) == to_signal(message)
