@@ -1,8 +1,6 @@
-from collections import deque
 from dataclasses import dataclass
-from typing import List, Deque, Set
 from itertools import repeat
-from copy import deepcopy
+from typing import List, Set
 
 
 class SparseList(list):
@@ -138,12 +136,25 @@ class Point:
 
 def create_beam(program) -> Set[Point]:
     beam = set()
-    for y in range(BEAM_HEIGHT):
-        for x in range(BEAM_WIDTH):
-            computer = IntcodeComputer.from_string(program)
-            outputs = computer.execute(input_data=[x, y], exit_on_output=True)
-            if outputs[-1] == 1:
-                beam.add(Point(x, y))
+    for y in range(BEAM_START_Y, BEAM_START_Y+BEAM_HEIGHT):
+        beam.update(beam_row(program, y, BEAM_START_X, BEAM_WIDTH))
+    return beam
+
+
+def beam_gen(program):
+    def _beam(x, y):
+        computer = IntcodeComputer.from_string(program)
+        outputs = computer.execute(input_data=[x, y], exit_on_output=True)
+        return outputs[-1]
+    return _beam
+
+
+def beam_row(program, row, x_start, x_width) -> Set[Point]:
+    beam = set()
+    beamg = beam_gen(program)
+    for x in range(x_start, x_start + x_width):
+        if beamg(x, row) == 1:
+            beam.add(Point(x, row))
     return beam
 
 
@@ -152,10 +163,26 @@ def print_beam(beam):
         ['.' for x in range(BEAM_WIDTH)] for y in range(BEAM_HEIGHT)
     ]
     for b in beam:
-        grid[b.y][b.x] = '#'
+        grid[b.y - BEAM_START_Y][b.x - BEAM_START_X] = '#'
     print('\n'.join(''.join(row) for row in grid))
 
 
+def search_square(program, bottom_left=(0, 10), square_size=100):
+    beamg = beam_gen(program)
+    coord_diff = square_size - 1
+    while True:
+        if beamg(*bottom_left):
+            top_right = (bottom_left[0] + coord_diff, bottom_left[1] - coord_diff)
+            if beamg(*top_right):  # implies top_left and bottom_right
+                top_left = (bottom_left[0], bottom_left[1] - coord_diff)
+                return 10000 * top_left[0] + top_left[1]
+            bottom_left = bottom_left[0], bottom_left[1] + 1  # Move down
+        else:
+            bottom_left = bottom_left[0] + 1, bottom_left[1]  # Move right
+
+
+BEAM_START_Y = 0
+BEAM_START_X = 0
 BEAM_WIDTH = 50
 BEAM_HEIGHT = 50
 
@@ -164,8 +191,9 @@ def solver():
     with open('input.txt', 'r') as f:
         line = f.readline()
         beam = create_beam(line)
-        print('Print 1:', len(beam))
-        print_beam(beam)
+        print('Part 1:', len(beam))
+        # print_beam(beam)
+        print('Part 2:', search_square(line))
 
 
 if __name__ == '__main__':
