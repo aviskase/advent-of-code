@@ -1,14 +1,14 @@
 import string
 from collections import deque
 from dataclasses import dataclass
-from typing import Deque, Set
+from typing import Deque
 
 
 @dataclass(eq=True, frozen=True)
 class Point:
     x: int
     y: int
-    keys: Set[str]
+    keys: int
 
 
 @dataclass(eq=True, frozen=True)
@@ -17,51 +17,75 @@ class QueueNode:
     distance: int
 
 
+def keyidx(ch) -> int:
+    return ord(ch) - ord('a')
+
+
+def keybit(ch):
+    return 1 << keyidx(ch)
+
+
+def dooridx(ch):
+    if ch in string.ascii_uppercase:
+        return ord(ch) - ord('A')
+
+
+def doorbit(ch):
+    return 1 << dooridx(ch)
+
+
+def has_key(keys, door):
+    return (keys & doorbit(door)) != 0
+
+
 class Maze:
     def __init__(self, lines):
-        self.keys = set()
-        self.doors = set()
         self.maze = {}
+        self.keys = [None] * 26
+        self.nkeys = 0
         for y, line in enumerate(lines):
-            for x, element in enumerate(line):
+            for x, element in enumerate(line.strip()):
                 if element != '#':
                     self.maze[(x, y)] = element
                 if element == '@':
-                    self.entry = Point(x, y, frozenset())
+                    self.entry = Point(x, y, 0)
                 elif element in string.ascii_lowercase:
-                    self.keys.add(element)
-                elif element in string.ascii_uppercase:
-                    self.doors.add(element)
+                    self.keys[keyidx(element)] = (x, y)
+                    self.nkeys += 1
+
+
+def step(x, y, direction):
+    directions_x = [0, 0, -1, 1]
+    directions_y = [-1, 1, 0, 0]
+    return x + directions_x[direction], y + directions_y[direction]
 
 
 def bfs(maze: Maze):
-    directions_x = [0, 0, -1, 1]
-    directions_y = [-1, 1, 0, 0]
-    visited = [maze.entry]
+    state = {}
     queue: Deque[QueueNode] = deque()
     queue.append(QueueNode(maze.entry, 0))
-    distances = set()
+    all_keys = (1 << maze.nkeys) - 1
     while queue:
         node = queue.popleft()
-        for i in range(4):
-            x = node.point.x + directions_x[i]
-            y = node.point.y + directions_y[i]
-            maze_point = maze.maze.get((x, y))
-            if not maze_point:
-                continue
-            keys = set(node.point.keys)
-            if maze_point in maze.keys:
-                keys.add(maze_point)
-            if keys == maze.keys:
-                return node.distance + 1
-            if maze_point in maze.doors and maze_point.lower() not in node.point.keys:
-                continue
-            point = Point(x, y, frozenset(keys))
-            if point not in visited:
-                visited.append(point)
-                queue.append(QueueNode(point, node.distance + 1))
-                distances.add(node.distance + 1)
-    return max(distances)
+        keys = node.point.keys
+        maze_point = maze.maze.get((node.point.x, node.point.y))
+        if maze_point in string.ascii_lowercase:
+            keys = node.point.keys | keybit(maze_point)
+            if keys == all_keys:
+                return node.distance
+        if maze_point in string.ascii_uppercase and not has_key(node.point.keys, maze_point):
+            continue
+        point = Point(node.point.x, node.point.y, keys)
+        state_distance = state.get(point, 100000)
+        if node.distance >= state_distance:
+            continue
+        state[point] = node.distance
+        queue.extend(
+            QueueNode(Point(*step(point.x, point.y, d), point.keys), node.distance+1)
+            for d in range(4)
+            if step(point.x, point.y, d) in maze.maze
+        )
+    return -1
 
 
 def solver():
