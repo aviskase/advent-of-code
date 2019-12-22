@@ -1,7 +1,7 @@
 import string
 from collections import deque
 from dataclasses import dataclass
-from typing import Deque
+from typing import Deque, Union, List, Tuple
 
 
 @dataclass(eq=True, frozen=True)
@@ -39,6 +39,10 @@ def has_key(keys, door):
 
 
 class Maze:
+    entry: Point
+    entries: List[Point]
+    keys: List[Union[Tuple[int, int], None]]
+
     def __init__(self, lines):
         self.maze = {}
         self.keys = [None] * 26
@@ -53,6 +57,29 @@ class Maze:
                     self.keys[keyidx(element)] = (x, y)
                     self.nkeys += 1
 
+    def transform(self):
+        del self.maze[(self.entry.x, self.entry.y)]
+        for d in range(4):
+            del self.maze[step(self.entry.x, self.entry.y, d)]
+
+        keys_by_quadrant = [0, 0, 0, 0]
+        for i in range(self.nkeys):
+            kx, ky = self.keys[i]
+            idx = (2 if ky > self.entry.y else 0) | (1 if kx > self.entry.x else 0)
+            keys_by_quadrant[idx] |= (1 << i)
+
+        all_keys = (1 << self.nkeys) - 1
+        initial_keys = [all_keys ^ k for k in keys_by_quadrant]
+
+        self.entries = [
+            Point(*step(*step(self.entry.x, self.entry.y, 0), 2), initial_keys[0]),
+            Point(*step(*step(self.entry.x, self.entry.y, 0), 3), initial_keys[1]),
+            Point(*step(*step(self.entry.x, self.entry.y, 1), 2), initial_keys[2]),
+            Point(*step(*step(self.entry.x, self.entry.y, 1), 3), initial_keys[3])
+        ]
+        for entry in self.entries:
+            self.maze[(entry.x, entry.y)] = '@'
+
 
 def step(x, y, direction):
     directions_x = [0, 0, -1, 1]
@@ -60,10 +87,12 @@ def step(x, y, direction):
     return x + directions_x[direction], y + directions_y[direction]
 
 
-def bfs(maze: Maze):
+def bfs(maze: Maze, entrance=None):
     state = {}
     queue: Deque[QueueNode] = deque()
-    queue.append(QueueNode(maze.entry, 0))
+    if not entrance:
+        entrance = maze.entry
+    queue.append(QueueNode(entrance, 0))
     all_keys = (1 << maze.nkeys) - 1
     while queue:
         node = queue.popleft()
@@ -91,8 +120,12 @@ def bfs(maze: Maze):
 def solver():
     with open('input.txt', 'r') as f:
         lines = f.readlines()
-        result = bfs(Maze(lines))
+        maze = Maze(lines)
+        result = bfs(maze)
         print('Print 1:', result)
+        maze.transform()
+        shortest = sum(bfs(maze, maze.entries[i]) for i in range(4))
+        print('Print 2:', shortest)
 
 
 if __name__ == '__main__':
