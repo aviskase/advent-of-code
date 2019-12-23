@@ -1,7 +1,15 @@
 import string
 from collections import defaultdict, deque
-from dataclasses import dataclass
-from typing import Dict, Deque, Union
+from dataclasses import dataclass, field
+from enum import Enum, auto
+from queue import PriorityQueue
+from typing import Dict, Deque, List
+
+
+class DoorType(Enum):
+    OUT = auto()
+    IN = auto()
+    EXIT = auto()
 
 
 @dataclass(frozen=True, eq=True)
@@ -11,29 +19,30 @@ class Point:
 
 
 @dataclass(frozen=True, eq=True)
-class LevelPoint:
-    x: int
-    y: int
-    level: int
+class Node:
+    point: Point
+    steps: int
+    door_type: DoorType
 
 
 class Maze:
     entry: Point
     exit: Point
-    tiles: Dict[Point, Dict[str, Union[str, None, Point]]]
+    tiles: Dict[Point, Dict[str, List[Node]]]
     width: int
     height: int
 
     def __init__(self, lines):
-        raw_data = [list(line.strip('\n')) for line in lines]
-        self.height = len(raw_data)
-        self.width = len(raw_data[3])
-        self.tiles = {
-            Point(x, y): {'door': None}
-            for y, r in enumerate(raw_data)
-            for x, ch in enumerate(r)
-            if ch == '.'
-        }
+        self.tiles = {}
+        self.height = len(lines)
+        self.width = len(max(lines, key=len).strip('\n'))
+        raw_data = [[' '] * self.width for y in range(self.height)]
+        for y, row in enumerate(lines):
+            for x, ch in enumerate(row.strip('\n')):
+                raw_data[y][x] = ch
+                if ch == '.':
+                    self.tiles[Point(x, y)] = {'nodes': []}
+
         to_skip = set()
         doors = defaultdict(set)
         for y, row in enumerate(raw_data):
@@ -41,135 +50,142 @@ class Maze:
                 if (x, y) in to_skip:
                     continue
                 if ch in string.ascii_uppercase:
-                    if y+1 < self.height and x < len(raw_data[y+1]) and raw_data[y+1][x] in string.ascii_uppercase:
+                    point = None
+                    if y+1 < self.height and raw_data[y+1][x] in string.ascii_uppercase:
                         to_skip.add((x, y+1))
                         door = ch + raw_data[y+1][x]
                         if y+2 < self.height and raw_data[y+2][x] == '.':
-                            self.tiles[Point(x, y+2)]['door'] = door
-                            doors[door].add(Point(x, y+2))
+                            point = Point(x, y+2)
                         elif raw_data[y-1][x] == '.':
-                            self.tiles[Point(x, y-1)]['door'] = door
-                            doors[door].add(Point(x, y-1))
-                    elif raw_data[y][x+1] in string.ascii_uppercase:
+                            point = Point(x, y-1)
+                    else:
+                        if raw_data[y][x+1] not in string.ascii_uppercase:
+                            raise ValueError('No doors found', x, y)
                         to_skip.add((x+1, y))
                         door = ch + raw_data[y][x+1]
-                        if x+2 < len(raw_data[y]) and raw_data[y][x+2] == '.':
-                            self.tiles[Point(x+2, y)]['door'] = door
-                            doors[door].add(Point(x+2, y))
+                        if x+2 < self.width and raw_data[y][x+2] == '.':
+                            point = Point(x+2, y)
                         elif raw_data[y][x-1] == '.':
-                            self.tiles[Point(x-1, y)]['door'] = door
-                            doors[door].add(Point(x-1, y))
+                            point = Point(x-1, y)
+                    doors[door].add(point)
+
         self.entry = doors['AA'].pop()
         del doors['AA']
         self.exit = doors['ZZ'].pop()
         del doors['ZZ']
+        self.transfers = {}
         for points in doors.values():
             p1 = points.pop()
             p2 = points.pop()
-            self.tiles[p1]['to'] = p2
-            self.tiles[p1]['type'] = self.door_type(p1)
-            self.tiles[p2]['to'] = p1
-            self.tiles[p2]['type'] = self.door_type(p2)
+            self.transfers[p1] = p2
+            self.transfers[p2] = p1
+
+        build_graph(self)
 
     def door_type(self, p: Point):
-        if p.x <= 3 or p.y <= 3:
-            return 'out'
-        if p.x >= self.width - 3 or p.y >= self.height - 3:
-            return 'out'
-        return 'in'
+        if p == self.exit:
+            return DoorType.EXIT
+        if p.x <= 4 or p.y <= 4:
+            return DoorType.OUT
+        if p.x >= self.width - 4 or p.y >= self.height - 4:
+            return DoorType.OUT
+        return DoorType.IN
 
 
-@dataclass
-class QueueNode:
-    point: Point
-    distance: int
-
-
-@dataclass
-class QueueLevelNode:
-    point: LevelPoint
-    distance: int
-
-
-def bfs(maze: Maze):
+def step(x, y, direction):
     directions_x = [0, 0, -1, 1]
     directions_y = [-1, 1, 0, 0]
-    visited = [maze.entry]
+    return x + directions_x[direction], y + directions_y[direction]
+
+
+def bfs_nodes(maze: Maze, entry: Point):
+    visited = [entry]
     queue: Deque[QueueNode] = deque()
-    queue.append(QueueNode(maze.entry, 0))
+    queue.append(QueueNode(0, entry))
+
     while queue:
         node = queue.popleft()
         not_moved = True
         for i in range(4):
-            x = node.point.x + directions_x[i]
-            y = node.point.y + directions_y[i]
+            x, y = step(node.point.x, node.point.y, i)
             new_point = Point(x, y)
             if new_point == maze.exit:
-                return node.distance + 1
-
+                maze.tiles[entry]['nodes'].append(Node(
+                    new_point,
+                    node.distance+1,
+                    maze.door_type(new_point)
+                ))
+                continue
             if new_point not in visited and new_point in maze.tiles.keys():
                 not_moved = False
                 visited.append(new_point)
-                queue.append(QueueNode(new_point, node.distance + 1))
-        if not_moved and 'to' in maze.tiles[node.point]:
-            new_point = maze.tiles[node.point]['to']
-            if new_point == maze.exit:
-                return node.distance + 1
-            if new_point not in visited:
-                visited.append(new_point)
-                queue.append(QueueNode(new_point, node.distance + 1))
-
-    return -1
+                queue.append(QueueNode(node.distance + 1, new_point))
+        if not_moved and node.point in maze.transfers:
+            maze.tiles[entry]['nodes'].append(Node(
+                maze.transfers[node.point],
+                node.distance+1,
+                maze.door_type(node.point)
+            ))
 
 
-def bfs_with_levels(maze: Maze):
-    directions_x = [0, 0, -1, 1]
-    directions_y = [-1, 1, 0, 0]
-    visited = [LevelPoint(maze.entry.x, maze.entry.y, 0)]
-    queue: Deque[QueueLevelNode] = deque()
-    queue.append(QueueLevelNode(visited[0], 0))
+def build_graph(maze: Maze):
+    for entry in maze.transfers:
+        if entry != maze.exit:
+            bfs_nodes(maze, entry)
+    bfs_nodes(maze, maze.entry)
+
+
+@dataclass(order=True)
+class QueueNode:
+    distance: int
+    point: Point = field(compare=False)
+    level: int = field(default=0, compare=False)
+
+
+def bfs_on_graph(maze: Maze):
+    queue: PriorityQueue[QueueNode] = PriorityQueue()
+    queue.put(QueueNode(0, maze.entry))
     while queue:
-        node = queue.popleft()
-        not_moved = True
-        for i in range(4):
-            x = node.point.x + directions_x[i]
-            y = node.point.y + directions_y[i]
-            new_point = LevelPoint(x, y, node.point.level)
-            if new_point.level == 0 and new_point.x == maze.exit.x and new_point.y == maze.exit.y:
-                return node.distance + 1
-
-            if new_point not in visited and Point(new_point.x, new_point.y) in maze.tiles.keys():
-                not_moved = False
-                visited.append(new_point)
-                queue.append(QueueLevelNode(new_point, node.distance + 1))
-        if not_moved and 'to' in maze.tiles[Point(node.point.x, node.point.y)]:
-            new_point = maze.tiles[Point(node.point.x, node.point.y)]['to']
-            if maze.tiles[Point(node.point.x, node.point.y)]['type'] == 'in':
-                new_point = LevelPoint(new_point.x, new_point.y, node.point.level + 1)
-            else:
-                if node.point.level == 0:
-                    continue
-                new_point = LevelPoint(new_point.x, new_point.y, node.point.level - 1)
-            if new_point.level == 0 and new_point.x == maze.exit.x and new_point.y == maze.exit.y:
-                return node.distance + 1
-            if new_point not in visited:
-                visited.append(new_point)
-                queue.append(QueueLevelNode(new_point, node.distance + 1))
-
+        node = queue.get()
+        if node.point == maze.exit:
+            return node.distance
+        for next_node in maze.tiles[node.point]['nodes']:
+            queue.put(QueueNode(node.distance + next_node.steps, next_node.point))
     return -1
 
 
-def bfs_nodes(start, maze: Maze):
-    nodes = []
-    return nodes
+def bfs_on_graph_with_levels(maze: Maze):
+    queue: PriorityQueue[QueueNode] = PriorityQueue()
+    queue.put(QueueNode(0, maze.entry, 0))
+    while queue:
+        node = queue.get()
+        if node.point == maze.exit and node.level == 0:
+            return node.distance
+        for next_node in maze.tiles[node.point]['nodes']:
+            if next_node.door_type == DoorType.OUT:
+                if node.level != 0:
+                    queue.put(QueueNode(
+                        node.distance + next_node.steps,
+                        next_node.point,
+                        node.level - 1
+                    ))
+            elif next_node.door_type == DoorType.IN:
+                queue.put(QueueNode(
+                    node.distance + next_node.steps,
+                    next_node.point,
+                    node.level + 1
+                ))
+            elif next_node.door_type == DoorType.EXIT and node.level == 0:
+                return node.distance + next_node.steps
+    return -1
 
 
 def solver():
     with open('input.txt', 'r') as f:
         lines = f.readlines()
         maze = Maze(lines)
-        print('Part 1:', bfs(maze))
-        print('Part 2:', bfs_with_levels(maze))
+        print('Part 1:', bfs_on_graph(maze))
+        print('Part 2:', bfs_on_graph_with_levels(maze))
 
 
 if __name__ == '__main__':

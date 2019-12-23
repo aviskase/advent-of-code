@@ -1,6 +1,6 @@
 import pytest
 
-from day20.puzzle import Maze, Point, bfs, bfs_with_levels
+from day20.puzzle import Maze, Point, bfs_on_graph, bfs_on_graph_with_levels
 
 MAZE_1 = '''         A           
          A           
@@ -104,20 +104,14 @@ def test_maze_parser():
     assert len(maze.tiles) == 47
     assert maze.entry == Point(9, 2)
     assert maze.exit == Point(13, 16)
-    assert maze.tiles[Point(9, 6)]['to'] == Point(2, 8)
-    assert maze.tiles[Point(9, 6)]['door'] == 'BC'
-    assert maze.tiles[Point(2, 8)]['to'] == Point(9, 6)
-    assert maze.tiles[Point(2, 8)]['door'] == 'BC'
+    assert maze.transfers[Point(9, 6)] == Point(2, 8)
+    assert maze.transfers[Point(2, 8)] == Point(9, 6)
 
-    assert maze.tiles[Point(6, 10)]['to'] == Point(2, 13)
-    assert maze.tiles[Point(6, 10)]['door'] == 'DE'
-    assert maze.tiles[Point(2, 13)]['to'] == Point(6, 10)
-    assert maze.tiles[Point(2, 13)]['door'] == 'DE'
+    assert maze.transfers[Point(6, 10)] == Point(2, 13)
+    assert maze.transfers[Point(2, 13)] == Point(6, 10)
 
-    assert maze.tiles[Point(11, 12)]['to'] == Point(2, 15)
-    assert maze.tiles[Point(11, 12)]['door'] == 'FG'
-    assert maze.tiles[Point(2, 15)]['to'] == Point(11, 12)
-    assert maze.tiles[Point(2, 15)]['door'] == 'FG'
+    assert maze.transfers[Point(11, 12)] == Point(2, 15)
+    assert maze.transfers[Point(2, 15)] == Point(11, 12)
 
 
 @pytest.mark.parametrize('maze, result', [
@@ -125,7 +119,7 @@ def test_maze_parser():
     (MAZE_2, 58),
 ])
 def test_bfs(maze, result):
-    assert bfs(Maze(maze)) == result
+    assert bfs_on_graph(Maze(maze)) == result
 
 
 @pytest.mark.parametrize('maze, result', [
@@ -133,5 +127,5 @@ def test_bfs(maze, result):
     # (MAZE_2, -1),
     (MAZE_3, 396),
 ])
-def test_bfs(maze, result):
-    assert bfs_with_levels(Maze(maze)) == result
+def test_bfs_with_levels(maze, result):
+    assert bfs_on_graph_with_levels(Maze(maze)) == result
