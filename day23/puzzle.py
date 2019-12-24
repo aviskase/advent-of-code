@@ -1,3 +1,4 @@
+from collections import deque
 from itertools import repeat
 from typing import List
 
@@ -59,9 +60,10 @@ class IntcodeComputer:
         if mode == 2:
             return self.program[val + self.relative_base]
 
-    def execute(self, input_data=None, exit_on_output=False, exit_after=1, exit_on_input=False):
+    def execute(self, input_data=None, exit_on_output=False, exit_after=1, exit_on_input=False, exit_after_inputs=None):
         outputs = []
         inputs = None
+        inputs_processed = 0
         if input_data is not None:
             inputs = self.inputs_generator(input_data)
         ready_to_exit = False
@@ -82,7 +84,8 @@ class IntcodeComputer:
                     value = next(inputs)
                     self.set_value(1, value, current_modes)
                     self.index += 2
-                ready_to_exit = exit_on_input
+                    inputs_processed += 1
+                ready_to_exit = exit_on_input or (exit_after_inputs and inputs_processed == exit_after_inputs)
             elif current_code == 4:
                 output_value = self.get_value(1, current_modes)
                 self.index += 2
@@ -127,9 +130,36 @@ class IntcodeComputer:
         yield from repeat(inputs[-1])
 
 
+def network(program):
+    size = 50
+    computers = [IntcodeComputer.from_string(program) for _ in range(size)]
+    inputs = [deque() for _ in range(size)]
+    default_input = -1
+    for i in range(size):
+        computers[i].execute(input_data=i, exit_after_inputs=1)
+
+    while True:
+        for i in range(size):
+            if inputs[i]:
+                current_input = [inputs[i].popleft(), inputs[i].popleft()]
+            else:
+                current_input = default_input
+            outputs = computers[i].execute(
+                input_data=current_input,
+                exit_on_output=True,
+                exit_after=3,
+                exit_after_inputs=2
+            )
+            if outputs:
+                if outputs[0] == 255:
+                    return outputs[1:]
+                inputs[outputs[0]].extend(outputs[1:])
+
+
 def solver():
     with open('input.txt', 'r') as f:
         line = f.readline()
+        print('Part 1:', network(line)[-1])
 
 
 if __name__ == '__main__':
