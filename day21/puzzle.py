@@ -127,12 +127,9 @@ class IntcodeComputer:
         yield from repeat(inputs[-1])
 
 
-def basic_jumper(program):
+def jumper(instructions, program):
     computer = IntcodeComputer.from_string(program)
     result = -1
-    # jump only if the next three are holes and 4th has ground
-    # (!A or !B or !C) and D == !(A and B and C) and D
-    instructions = 'OR A T\nAND B T\nAND C T\nNOT T J\nAND D J\nWALK\n'
     inputs = [ord(ch) for ch in instructions]
     outputs = computer.execute(input_data=inputs)
     if outputs[-1] not in range(0x110000):
@@ -141,10 +138,27 @@ def basic_jumper(program):
     return result
 
 
+def walker(program):
+    # jump only if the next three contain holes and 4th has ground
+    # (!A or !B or !C) and D == !(A and B and C) and D
+    instructions = 'OR A T\nAND B T\nAND C T\nNOT T J\nAND D J\nWALK\n'
+    return jumper(instructions, program)
+
+
+def runner(program):
+    # jump only if the next three contain holes and 4th is ground and 5th or 8th is ground
+    # because if not will fail in:
+    # x___x_xxx_x
+    # (!A or !B or !C) and D and (H or E) == !(A and B and C) and D and (H or E)
+    instructions = 'OR A T\nAND B T\nAND C T\nNOT T J\nAND D J\nNOT H T\nNOT T T\nOR E T\nAND T J\nRUN\n'
+    return jumper(instructions, program)
+
+
 def solver():
     with open('input.txt', 'r') as f:
         line = f.readline()
-        print('Part 1:', basic_jumper(line))
+        print('Part 1:', walker(line))
+        print('Part 2:', runner(line))
 
 
 if __name__ == '__main__':
