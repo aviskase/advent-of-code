@@ -82,6 +82,7 @@ class RecursiveBugSimulator:
                 self.state[0][y][x] = item == '#'
 
     def state_to_str(self, level):
+        s = []
         for y, row in enumerate(self.state[level]):
             s.append([])
             for x, element in enumerate(row):
