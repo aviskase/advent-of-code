@@ -93,9 +93,34 @@ class IntcodeComputer:
                 raise ValueError(f'Unexpected optcode {operation}')
 
 
+def play(program):
+    computer = IntcodeComputer.from_string(program)
+    executor = computer.execute()
+    presenter = []
+    output = next(executor)
+    assert output is not None
+    while True:
+        while output is not None:
+            presenter.append(chr(output))
+            output = next(executor, None)
+        print(''.join(presenter))
+        if computer.finished:
+            break
+        command = input()
+        if command == 'exit':
+            break
+        for ch in command:
+            output = executor.send(ord(ch))
+            assert output is None
+        presenter = []
+        output = executor.send(10)
+        assert output is not None
+
+
 def solver():
     with open('input.txt', 'r') as f:
         line = f.readline()
+        play(line)
 
 
 if __name__ == '__main__':
