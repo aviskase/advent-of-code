@@ -5,8 +5,8 @@ def valid(rules: List[List[str]]) -> List[str]:
     valid_passwords = []
     for [rule, password] in rules:
         numbers, letter = rule.split(' ')
-        a, b = numbers.split('-')
-        if int(a) <= password.count(letter) <= int(b):
+        a, b = map(lambda x: int(x), numbers.split('-'))
+        if a <= password.count(letter) <= b:
             valid_passwords.append(password)
     return valid_passwords
 
