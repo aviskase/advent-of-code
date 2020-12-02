@@ -1,6 +1,6 @@
 import pytest
 
-from day13.puzzle import IntcodeComputer
+from .puzzle import IntcodeComputer
 
 
 @pytest.mark.parametrize('program,result', [

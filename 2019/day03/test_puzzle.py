@@ -1,6 +1,4 @@
-import pytest
-
-from day03.puzzle import instructions_to_coordinates, line_to_instruction, find_intersections, find_closest, find_fastest
+from .puzzle import instructions_to_coordinates, line_to_instruction, find_intersections, find_closest, find_fastest
 
 
 def test_find_intersection():

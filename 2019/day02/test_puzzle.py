@@ -1,6 +1,6 @@
 import pytest
 
-from day02.puzzle import execute_program
+from .puzzle import execute_program
 
 
 @pytest.mark.parametrize('program,result', [

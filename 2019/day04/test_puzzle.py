@@ -1,4 +1,4 @@
-from day04.puzzle import is_valid
+from .puzzle import is_valid
 
 
 def test_is_valid():

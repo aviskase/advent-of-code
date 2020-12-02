@@ -1,6 +1,6 @@
 import pytest
 
-from day09.puzzle import execute_program, unpack_code, run_engines, inputs_generator, run_engines_with_feedback
+from .puzzle import execute_program, unpack_code, run_engines, inputs_generator, run_engines_with_feedback
 
 
 @pytest.mark.parametrize('program,result', [

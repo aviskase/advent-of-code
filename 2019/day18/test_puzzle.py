@@ -1,7 +1,6 @@
 import pytest
 
-from day18.puzzle import bfs, Maze
-
+from .puzzle import bfs, Maze
 
 a = '''#########
 #b.A.@.a#

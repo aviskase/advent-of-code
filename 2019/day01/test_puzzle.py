@@ -1,5 +1,6 @@
 import pytest
-from day01.puzzle import calculate_fuel, total_fuel, calculate_fuel_recursively
+
+from .puzzle import calculate_fuel, total_fuel, calculate_fuel_recursively
 
 
 @pytest.mark.parametrize('mass,fuel', [

@@ -1,5 +1,6 @@
 import pytest
-from day06.puzzle import get_indirects, find_orbits, find_common_node, total_nodes, total_transfers_to_node
+
+from .puzzle import get_indirects, find_orbits, find_common_node, total_nodes, total_transfers_to_node
 
 orbits_map = {
     'B': 'COM',

@@ -1,5 +1,6 @@
 import pytest
-from day12.puzzle import Moon, simulator, find_old_new_state
+
+from .puzzle import Moon, simulator, find_old_new_state
 
 
 @pytest.mark.parametrize('data, result', [

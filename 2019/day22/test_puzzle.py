@@ -1,6 +1,6 @@
 import pytest
 
-from day22.puzzle import shuffle_deck
+from .puzzle import shuffle_deck
 
 
 @pytest.mark.parametrize('size, instructions, result', [

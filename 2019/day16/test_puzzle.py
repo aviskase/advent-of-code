@@ -1,6 +1,8 @@
-import pytest
 from itertools import islice
-from day16.puzzle import to_signal, get_pattern, phase, cycle_phases, get_message
+
+import pytest
+
+from .puzzle import to_signal, get_pattern, phase, cycle_phases, get_message
 
 
 def test_to_signal():

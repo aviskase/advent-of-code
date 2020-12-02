@@ -1,4 +1,4 @@
-from day24.puzzle import BugSimulator, RecursiveBugSimulator
+from .puzzle import BugSimulator, RecursiveBugSimulator
 
 
 def test_biodiversity_calc():

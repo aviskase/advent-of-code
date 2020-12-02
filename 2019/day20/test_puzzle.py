@@ -1,6 +1,6 @@
 import pytest
 
-from day20.puzzle import Maze, Point, bfs_on_graph, bfs_on_graph_with_levels
+from .puzzle import Maze, Point, bfs_on_graph, bfs_on_graph_with_levels
 
 MAZE_1 = '''         A           
          A           

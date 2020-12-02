@@ -1,6 +1,6 @@
 import pytest
 
-from day09.puzzle import IntcodeComputer, run_engines, run_engines_with_feedback
+from .puzzle import IntcodeComputer, run_engines, run_engines_with_feedback
 
 
 @pytest.mark.parametrize('program,result', [

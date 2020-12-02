@@ -1,5 +1,6 @@
 import pytest
-from day08.puzzle import convert_to_layers, num_of_x, find_with_smallest_zeros, combine_layers
+
+from .puzzle import convert_to_layers, num_of_x, find_with_smallest_zeros, combine_layers
 
 
 def test_convert_to_layers():

@@ -1,5 +1,6 @@
 import pytest
-from day14.puzzle import parse_data, calculate_fuel
+
+from .puzzle import parse_data, calculate_fuel
 
 f0 = """10 ORE => 10 A
 1 ORE => 1 B
