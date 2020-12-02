@@ -1,4 +1,4 @@
-from .puzzle import valid, valid2
+from .puzzle import valid, compare_by_count, compare_by_position
 
 data = [
     ['1-3 a', 'abcde'],
@@ -7,8 +7,9 @@ data = [
 ]
 
 
-def test_valid():
-    assert {'abcde', 'ccccccccc'} == set(valid(data))
+def test_valid_by_count():
+    assert {'abcde', 'ccccccccc'} == set(valid(data, compare_by_count))
 
-def test_valid2():
-    assert {'abcde'} == set(valid2(data))
+
+def test_valid_by_position():
+    assert {'abcde'} == set(valid(data, compare_by_position))
