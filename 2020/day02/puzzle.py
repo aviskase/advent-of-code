@@ -23,7 +23,7 @@ def solver():
     with open('input.txt', 'r') as f:
         rules = [line.split(': ') for line in f.readlines()]
         print('Part 1:', len(valid(rules, compare_by_count)))
-        print('Part 1:', len(valid(rules, compare_by_position)))
+        print('Part 2:', len(valid(rules, compare_by_position)))
 
 
 if __name__ == '__main__':
