@@ -20,12 +20,20 @@ def can_contain(rules, main_bag):
     return bags
 
 
+def num_of_bags_inside(rules, main_bag, start=0):
+    total = start
+    inner_bags = rules[main_bag]
+    for bag, num in inner_bags.items():
+        total += num * num_of_bags_inside(rules, bag, 1)
+    return total
+
+
 def solver():
     with open('input.txt', 'r') as f:
         rules = f.read().strip().splitlines()
         rule_map = map_rules(rules)
         print('Part 1:', len(can_contain(rule_map, 'shiny gold')))  # 248
-        # print('Part 2:', )  #
+        print('Part 2:', num_of_bags_inside(rule_map, 'shiny gold'))  # 57281
 
 
 if __name__ == '__main__':
