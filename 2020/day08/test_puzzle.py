@@ -1,4 +1,4 @@
-from .puzzle import parse_commands, execute
+from .puzzle import parse_commands, execute, repair
 
 data = parse_commands('''nop +0
 acc +1
@@ -15,3 +15,6 @@ acc +6
 def test_accumulator_before_loop():
     assert execute(data) == (5, False)
 
+
+def test_repair():
+    assert repair(data) == 8

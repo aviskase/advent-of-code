@@ -29,12 +29,26 @@ def execute(commands: TCommands) -> (int, bool):
     return accumulator, True
 
 
+def repair(commands: TCommands) -> int:
+    for current, cmd in enumerate(commands):
+        new_commands = commands.copy()
+        if cmd.cmd == 'nop':
+            new_commands[current] = Command('jmp', cmd.num)
+        elif cmd.cmd == 'jmp':
+            new_commands[current] = Command('nop', cmd.num)
+        else:
+            continue
+        result, is_repaired = execute(new_commands)
+        if is_repaired:
+            return result
+
+
 def solver():
     with open('input.txt', 'r') as f:
         raw_data = f.read().strip().splitlines()
         commands = parse_commands(raw_data)
         print('Part 1:', execute(commands))  # 1818
-        # print('Part 2:', )  #
+        print('Part 2:', repair(commands))  #
 
 
 if __name__ == '__main__':
