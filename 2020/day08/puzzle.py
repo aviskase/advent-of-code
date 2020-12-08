@@ -48,7 +48,7 @@ def solver():
         raw_data = f.read().strip().splitlines()
         commands = parse_commands(raw_data)
         print('Part 1:', execute(commands))  # 1818
-        print('Part 2:', repair(commands))  #
+        print('Part 2:', repair(commands))  # 631
 
 
 if __name__ == '__main__':
