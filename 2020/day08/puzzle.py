@@ -11,13 +11,13 @@ def parse_commands(lines: List[str]) -> TCommands:
     ]
 
 
-def accumulator_before_loop(commands: TCommands) -> int:
+def execute(commands: TCommands) -> (int, bool):
     visited = set()
     accumulator = 0
     current = 0
-    while True:
-        if current in visited:
-            return accumulator
+    while current < len(commands):
+        if current in visited:  # looped
+            return accumulator, False
         visited.add(current)
         if commands[current].cmd == 'acc':
             accumulator += commands[current].num
@@ -26,13 +26,14 @@ def accumulator_before_loop(commands: TCommands) -> int:
             current += commands[current].num
         else:
             current += 1
+    return accumulator, True
 
 
 def solver():
     with open('input.txt', 'r') as f:
         raw_data = f.read().strip().splitlines()
         commands = parse_commands(raw_data)
-        print('Part 1:', accumulator_before_loop(commands))  # 1818
+        print('Part 1:', execute(commands))  # 1818
         # print('Part 2:', )  #
 
 

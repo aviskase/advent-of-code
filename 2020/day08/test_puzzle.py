@@ -1,4 +1,4 @@
-from .puzzle import parse_commands, accumulator_before_loop
+from .puzzle import parse_commands, execute
 
 data = parse_commands('''nop +0
 acc +1
@@ -13,5 +13,5 @@ acc +6
 
 
 def test_accumulator_before_loop():
-    assert accumulator_before_loop(data) == 5
+    assert execute(data) == (5, False)
 
