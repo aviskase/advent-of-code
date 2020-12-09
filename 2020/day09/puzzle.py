@@ -11,8 +11,8 @@ def find_first_invalid(numbers: List[int], preamble=25) -> int:
 
 
 def find_range_for_invalid(numbers: List[int], invalid) -> Tuple[int, int]:
-    for i, a in enumerate(numbers):
-        for j, b in enumerate(numbers[1:], start=2):
+    for i in range(len(numbers)):
+        for j in range(2, len(numbers)):
             if invalid == sum(numbers[i:j]):
                 return min(numbers[i:j]), max(numbers[i:j])
 
