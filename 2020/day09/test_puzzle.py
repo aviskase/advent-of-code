@@ -1,4 +1,4 @@
-from .puzzle import find_first_invalid
+from .puzzle import find_first_invalid, find_range_for_invalid
 
 data = [int(x) for x in '''35
 20
@@ -26,3 +26,6 @@ data = [int(x) for x in '''35
 def test_find_first_invalid():
     assert find_first_invalid(data, 5) == 127
 
+
+def test_find_range_for_invalid():
+    assert find_range_for_invalid(data, 127) == (15, 47)
