@@ -75,7 +75,7 @@ def solver():
         end_state = simulate(seats)
         print('Part 1:', quantify(flatten(end_state), lambda x: x == OCCUPIED))  # 2277
         end_state = simulate(seats, occupied_threshold=5, neighbours_fn=all_visible)
-        print('Part 1:', quantify(flatten(end_state), lambda x: x == OCCUPIED))  # 2066
+        print('Part 2:', quantify(flatten(end_state), lambda x: x == OCCUPIED))  # 2066
 
 
 if __name__ == '__main__':
