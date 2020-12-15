@@ -14,3 +14,16 @@ from .puzzle import num_at_round
 ])
 def test_num_at_round(d, expected):
     assert num_at_round(d, 2020) == expected
+
+
+@pytest.mark.parametrize('d, expected', [
+    ([0, 3, 6], 175594),
+    ([1, 3, 2], 2578),
+    ([2, 1, 3], 3544142),
+    ([1, 2, 3], 261214),
+    ([2, 3, 1], 6895259),
+    ([3, 2, 1], 18),
+    ([3, 1, 2], 362),
+])
+def test_num_at_round2(d, expected):
+    assert num_at_round(d, 30000000) == expected
