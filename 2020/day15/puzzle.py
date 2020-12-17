@@ -23,7 +23,7 @@ def solver():
     with open('input.txt', 'r') as f:
         numbers = [int(x) for x in f.read().strip().split(',')]
         print('Part 1:', num_at_round(numbers, 2020))  # 1618
-        print('Part 2:', num_at_round(numbers, 30000000))  #
+        print('Part 2:', num_at_round(numbers, 30000000))  # 548531
 
 
 if __name__ == '__main__':
