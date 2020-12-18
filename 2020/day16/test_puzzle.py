@@ -1,4 +1,4 @@
-from .puzzle import parse, RuleRange, find_errors
+from .puzzle import parse, RuleRange, find_errors, find_fields
 
 
 data = '''class: 1-3 or 5-7
@@ -40,3 +40,21 @@ def test_parse():
 
 def test_find_errors():
     assert find_errors(parsed_rules, parsed_other_tickets) == [4, 55, 12]
+
+
+data2 = '''class: 0-1 or 4-19
+row: 0-5 or 8-19
+seat: 0-13 or 16-19
+
+your ticket:
+11,12,13
+
+nearby tickets:
+3,9,18
+15,1,5
+5,14,9'''.strip()
+
+
+def test_find_fields():
+    rules, my_ticket, other_tickets = parse(data2)
+    assert find_fields(rules, other_tickets) == ['row', 'class', 'seat']
