@@ -64,6 +64,7 @@ def solver():
     with open('input.txt', 'r') as f:
         cube = make_cube(f.read().strip())
         end_state = simulate(cube, 6)
+        print('Part 1:', count_active(end_state))  # 293
         print('Part 1:', count_active(end_state))  # 2277
         # print('Part 2:', )  #
 
