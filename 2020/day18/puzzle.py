@@ -1,7 +1,20 @@
 from collections import deque
 
 
-def convert_to_postfix(expr):
+ORDERS_1 = {
+    '(': 1,
+    '+': 2,
+    '*': 2,
+}
+
+ORDERS_2 = {
+    '(': 1,
+    '+': 3,
+    '*': 2,
+}
+
+
+def convert_to_postfix(expr, orders):
     expr_clean = expr.replace('(', ' ( ').replace(')', ' ) ').replace('  ', ' ').strip()
     operators = deque()
     postfix_expr = []
@@ -12,8 +25,8 @@ def convert_to_postfix(expr):
             while operators[-1] != '(':
                 postfix_expr.append(operators.pop())
             operators.pop()
-        elif token in ['*', '+']:
-            while operators and operators[-1] != '(':
+        elif token in orders:
+            while operators and orders[operators[-1]] >= orders[token]:
                 postfix_expr.append(operators.pop())
             operators.append(token)
         else:
@@ -23,8 +36,10 @@ def convert_to_postfix(expr):
     return postfix_expr
 
 
-def calculate(expr: str) -> int:
-    postfix_expr = convert_to_postfix(expr)
+def calculate(expr: str, orders=None) -> int:
+    if orders is None:
+        orders = ORDERS_1
+    postfix_expr = convert_to_postfix(expr, orders)
     stack = deque()
     for token in postfix_expr:
         if token == '+':
@@ -40,7 +55,7 @@ def solver():
     with open('input.txt', 'r') as f:
         data = f.read().strip().splitlines()
         print('Part 1:', sum(calculate(expr) for expr in data))  # 98621258158412
-        # print('Part 2:', )  # 1816
+        print('Part 2:', sum(calculate(expr, ORDERS_2) for expr in data))  # 241216538527890
 
 
 if __name__ == '__main__':
