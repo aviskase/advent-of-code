@@ -1,6 +1,6 @@
 import pytest
 
-from .puzzle import parse, find_valid
+from .puzzle import parse, find_valid, part_1_regex
 
 data0 = '''
 0: 1 2
@@ -47,7 +47,7 @@ aaaabbb
     (data2, ['ababbb', 'abbbab'])
 ])
 def test_find_valid(d, expected):
-    rule, messages = parse(d)
-    assert find_valid(rule, messages) == expected
+    rules, messages = parse(d)
+    assert find_valid(part_1_regex(rules), messages) == expected
 
 

@@ -7,9 +7,8 @@ def parse(raw_data: str):
     for r in raw_rules.strip().splitlines():
         code, info = r.split(': ')
         rules[code] = [i.strip().split(' ') for i in info.replace('"', '').split('|')]
-    master_rule = re.compile(f'^{build_regex(rules)}$')
     messages = raw_messages.strip().splitlines()
-    return master_rule, messages
+    return rules, messages
 
 
 def find_valid(master_rule, messages):
@@ -30,11 +29,29 @@ def build_regex(rules, start_rule='0'):
     return f"({'|'.join(or_rules)})"
 
 
+def part_1_regex(rules):
+    return re.compile(f'^{build_regex(rules)}$')
+
+
+def part_2_regex(rules):
+    # 0: 8 11
+    # 8: 42 | 42 8
+    # 11: 42 31 | 42 11 31
+    rule_42 = build_regex(rules, '42')
+    rule_31 = build_regex(rules, '31')
+    rule_8 = f'({rule_42})+'
+    # fake it with up to 5 nested rules
+    rule_11 = '|'.join(['(' + f'({rule_42})' * i + f'({rule_31})' * i + ')' for i in range(1, 5)])
+    return re.compile(f'^({rule_8})({rule_11})$')
+
+
 def solver():
     with open('input.txt', 'r') as f:
-        master_rule, messages = parse(f.read().strip())
+        rules, messages = parse(f.read().strip())
+        master_rule = part_1_regex(rules)
         print('Part 1:', len(find_valid(master_rule, messages)))  # 149
-        print('Part 2:', )  #
+        master_rule = part_2_regex(rules)
+        print('Part 2:', len(find_valid(master_rule, messages)))  # 332
 
 
 if __name__ == '__main__':
