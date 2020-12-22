@@ -1,4 +1,4 @@
-from .puzzle import parse, find_corners
+from .puzzle import parse, find_corners, detect_image, replace_sea_monsters
 
 data = '''Tile 2311:
 ..##.#..#.
@@ -115,3 +115,8 @@ def test_find_corners():
     assert {t.id for t in corners} == {1951, 3079, 2971, 1171}
 
 
+def test_replace_sea_monsters():
+    tiles = parse(data)
+    corners = find_corners(tiles)
+    img = detect_image(tiles, corners)
+    assert replace_sea_monsters(img) == 273
