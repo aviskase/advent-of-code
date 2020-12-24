@@ -13,6 +13,17 @@ def get_neighbor(coordinates: TCoordinates, direction: Direction) -> TCoordinate
     return coordinates[0] + direction.value[0], coordinates[1] + direction.value[1]
 
 
+def all_neighbors(coordinates: TCoordinates):
+    return [get_neighbor(coordinates, d) for d in Direction]
+
+
+def add_neighbors(floor: TFloor) -> TFloor:
+    new_floor = floor.copy()
+    for tile in floor:
+        new_floor.update({n: False for n in all_neighbors(tile) if n not in floor})
+    return new_floor
+
+
 class Direction(Enum):
     NE: TCoordinates = (1, -1)
     E: TCoordinates = (1, 0)
@@ -53,12 +64,28 @@ def paint_it_black(tiles: List[TInstruction]) -> TFloor:
     return floor
 
 
+def flip(start_floor: TFloor, days=100) -> TFloor:
+    current_floor = start_floor
+    for _ in range(days):
+        current_floor = add_neighbors(current_floor)
+        next_floor = current_floor.copy()
+        for tile, is_black in current_floor.items():
+            black_neighbors = quantify(current_floor[n] for n in all_neighbors(tile) if n in current_floor)
+            if is_black and black_neighbors not in [1, 2]:
+                next_floor[tile] = False
+            elif not is_black and black_neighbors == 2:
+                next_floor[tile] = True
+        current_floor = next_floor
+    return current_floor
+
+
 def solver():
     with open('input.txt', 'r') as f:
         raw_data = f.read().strip().splitlines()
         data = [parse_tile(d) for d in raw_data]
-        print('Part 1:', count_blacks(paint_it_black(data)))  # 450
-        # print('Part 2:', )  #
+        init_state = paint_it_black(data)
+        print('Part 1:', count_blacks(init_state))  # 450
+        print('Part 2:', count_blacks(flip(init_state)))  # 4059
 
 
 if __name__ == '__main__':

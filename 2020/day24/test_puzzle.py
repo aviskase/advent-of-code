@@ -1,6 +1,6 @@
 import pytest
 
-from .puzzle import parse_tile, Direction, count_blacks, paint_it_black
+from .puzzle import parse_tile, Direction, count_blacks, paint_it_black, flip
 
 
 @pytest.mark.parametrize('tile, expected', [
@@ -38,3 +38,8 @@ wseweeenwnesenwwwswnew'''.strip().splitlines()
 def test_count_blacks():
     d = [parse_tile(d) for d in data]
     assert count_blacks(paint_it_black(d)) == 10
+
+
+def test_flip():
+    d = [parse_tile(d) for d in data]
+    assert count_blacks(flip(paint_it_black(d))) == 2208
